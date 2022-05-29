@@ -36,47 +36,57 @@ class OptionsScreen(game: RetrowarsGame): Scene2dScreen(game, { game.showMainMen
                 makeHeading(strings["options.title"], styles, strings) {
                     game.showMainMenu()
                 }
-            ).expandY()
+            ).colspan(2).expandY()
 
             row().pad(UI_SPACE)
             add(
-                CheckBox(strings["options.visual-effects"], skin).apply {
+                Table().also { wrapper ->
 
-                    isChecked = Options.useVisualEffects()
+                    wrapper.add(
+                        Label(strings["options.controller-layouts"], styles.label.medium)
+                    )
 
-                    addListener( object: ChangeListener() {
-                        override fun changed(event: ChangeEvent?, actor: Actor?) {
-                            Options.setUseVisualEffects(!Options.useVisualEffects())
-                        }
-                    })
-
-                }
-            )
-
-            row().padTop(UI_SPACE * 2).padBottom(UI_SPACE)
-            add(
-                Label(strings["options.controller-layouts"], styles.label.medium)
-            )
-
-            row()
-            add(
-                HorizontalGroup().apply {
                     Games.allAvailable
                         .filter { it.controllerLayout != null }
-                        .forEach { gameDetails ->
-                            addActor(
-                                IconButton(skin, gameDetails.icon(sprites)) {
-                                    Gdx.app.postRunnable {
-                                        game.screen = ControllerSelectScreen(game, gameDetails)
+                        .chunked(3)
+                        .forEach { games ->
+                            val row = HorizontalGroup()
+                            wrapper.row()
+                            wrapper.add(row)
+                            games.forEach { gameDetails ->
+                                row.addActor(
+                                    IconButton(skin, gameDetails.icon(sprites)) {
+                                        Gdx.app.postRunnable {
+                                            game.screen = ControllerSelectScreen(game, gameDetails)
+                                        }
                                     }
-                                }
-                            )
-
-
-                    }
+                                )
+                            }
+                        }
                 }
-            )
+            ).width(stage.viewport.worldWidth / 2f)
 
+            add(
+                Table().also { wrapper ->
+
+                    wrapper.add(
+                        CheckBox(strings["options.visual-effects"], skin).apply {
+
+                            isChecked = Options.useVisualEffects()
+                            this.label.wrap = true
+
+                            addListener( object: ChangeListener() {
+                                override fun changed(event: ChangeEvent?, actor: Actor?) {
+                                    Options.setUseVisualEffects(!Options.useVisualEffects())
+                                }
+                            })
+
+                        }
+                    )
+                }
+            ).width(stage.viewport.worldWidth / 2f)
+
+            /*
             row().padTop(UI_SPACE * 2).padBottom(UI_SPACE)
             add(
                 Label(strings["options.multiplayer-avatar"], styles.label.medium)
@@ -101,6 +111,7 @@ class OptionsScreen(game: RetrowarsGame): Scene2dScreen(game, { game.showMainMen
                     })
                 }
             ).expandY().top()
+            */
 
         }
 
@@ -232,18 +243,17 @@ class ControllerSelectScreen(
 
     init {
 
+        val styles = game.uiAssets.getStyles()
+        val strings = game.uiAssets.getStrings()
+        val sprites = game.uiAssets.getSprites()
+
         val container = Table().apply {
             setFillParent(true)
             pad(UI_SPACE)
         }
 
         container.add(
-            makeHeading(
-                gameDetails.icon(game.uiAssets.getSprites()),
-                game.uiAssets.getStrings()["options.controller-select.title"],
-                game.uiAssets.getStyles(),
-                game.uiAssets.getStrings()
-            ) {
+            makeHeading(gameDetails.icon(sprites), strings["options.controller-select.title"], styles, strings,) {
                 game.showOptions()
             }
         ).top().colspan(3)
